@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bloom Beauty — Salon & Spa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:    #c9856a;
+      --blush:   #f3ddd5;
+      --cream:   #fdf8f5;
+      --dark:    #2b1f1a;
+      --muted:   #8a7068;
+      --gold:    #c8a96e;
+      --white:   #ffffff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 6%;
+      background: rgba(253, 248, 245, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(201, 133, 106, 0.15);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.55rem;
+      color: var(--rose);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-logo span { color: var(--gold); }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2.2rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.25s;
+    }
+
+    nav a:hover { color: var(--rose); }
+
+    .nav-cta {
+      background: var(--rose);
+      color: var(--white) !important;
+      padding: 0.55rem 1.3rem;
+      border-radius: 50px;
+      transition: background 0.25s, transform 0.2s !important;
+    }
+
+    .nav-cta:hover { background: #b5735a !important; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 7rem 6% 4rem;
+      gap: 3rem;
+    }
+
+    .hero-text { max-width: 560px; }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--rose);
+      background: var(--blush);
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      margin-bottom: 1.4rem;
+    }
+
+    .hero-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.6rem, 5vw, 4rem);
+      line-height: 1.15;
+      color: var(--dark);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-text h1 em { color: var(--rose); font-style: italic; }
+
+    .hero-text p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      margin-bottom: 2.2rem;
+      max-width: 420px;
+    }
+
+    .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    .btn-primary {
+      background: var(--rose);
+      color: var(--white);
+      padding: 0.85rem 2rem;
+      border-radius: 50px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+      box-shadow: 0 6px 24px rgba(201, 133, 106, 0.35);
+    }
+
+    .btn-primary:hover { background: #b5735a; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(201, 133, 106, 0.45); }
+
+    .btn-outline {
+      border: 2px solid var(--rose);
+      color: var(--rose);
+      padding: 0.82rem 1.9rem;
+      border-radius: 50px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      transition: background 0.25s, color 0.25s, transform 0.2s;
+    }
+
+    .btn-outline:hover { background: var(--rose); color: var(--white); transform: translateY(-2px); }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(201, 133, 106, 0.2);
+    }
+
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: var(--rose);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-blob {
+      width: min(520px, 90%);
+      aspect-ratio: 1;
+      border-radius: 60% 40% 55% 45% / 50% 55% 45% 50%;
+      background: linear-gradient(135deg, var(--blush) 0%, #e8c4b6 60%, #d4a090 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10rem;
+      animation: morph 8s ease-in-out infinite;
+      box-shadow: 0 30px 80px rgba(201, 133, 106, 0.25);
+    }
+
+    @keyframes morph {
+      0%, 100% { border-radius: 60% 40% 55% 45% / 50% 55% 45% 50%; }
+      33%       { border-radius: 45% 55% 40% 60% / 55% 45% 55% 45%; }
+      66%       { border-radius: 55% 45% 60% 40% / 45% 60% 40% 55%; }
+    }
+
+    .floating-card {
+      position: absolute;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 0.9rem 1.2rem;
+      box-shadow: 0 8px 32px rgba(43, 31, 26, 0.12);
+      font-size: 0.82rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    .card-top    { top: 12%; right: -2%; animation-delay: 0s; }
+    .card-bottom { bottom: 14%; left: -4%; animation-delay: 1.5s; }
+
+    .card-icon { font-size: 1.4rem; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    /* ── SECTION SHARED ── */
+    section { padding: 6rem 6%; }
+
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--rose);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      line-height: 1.2;
+      color: var(--dark);
+      margin-bottom: 1rem;
+    }
+
+    .section-title em { font-style: italic; color: var(--rose); }
+
+    .section-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 520px;
+    }
+
+    .section-header { margin-bottom: 3.5rem; }
+
+    /* ── SERVICES ── */
+    #services { background: var(--white); }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .service-card {
+      background: var(--cream);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(201, 133, 106, 0.12);
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(to bottom, var(--rose), var(--gold));
+      border-radius: 4px 0 0 4px;
+    }
+
+    .service-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(201, 133, 106, 0.18); }
+
+    .service-icon {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .service-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .service-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 1.4rem;
+      line-height: 1.55;
+    }
+
+    .price-list { list-style: none; }
+
+    .price-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0;
+      border-bottom: 1px dashed rgba(201, 133, 106, 0.2);
+      font-size: 0.9rem;
+    }
+
+    .price-item:last-child { border-bottom: none; }
+    .price-item span:first-child { color: var(--dark); font-weight: 400; }
+
+    .price-amount {
+      font-weight: 600;
+      color: var(--rose);
+      font-size: 0.95rem;
+    }
+
+    /* ── ABOUT ── */
+    #about {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 5rem;
+    }
+
+    .about-visual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .about-img {
+      border-radius: 20px;
+      aspect-ratio: 3/4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+    }
+
+    .about-img:nth-child(1) { background: linear-gradient(135deg, #f3ddd5, #e8c4b6); margin-top: 2rem; }
+    .about-img:nth-child(2) { background: linear-gradient(135deg, #e8c4b6, #c9856a33); }
+    .about-img:nth-child(3) { background: linear-gradient(135deg, #d4a090, #c8a96e33); }
+    .about-img:nth-child(4) { background: linear-gradient(135deg, #f3ddd5, #c9856a22); margin-top: -2rem; }
+
+    .feature-list { list-style: none; margin-top: 1.8rem; }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .feature-check {
+      width: 26px; height: 26px;
+      background: var(--blush);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+      color: var(--rose);
+    }
+
+    .feature-text strong { display: block; font-weight: 600; color: var(--dark); margin-bottom: 0.15rem; }
+    .feature-text span { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--blush); }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .testimonial-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: transform 0.3s;
+    }
+
+    .testimonial-card:hover { transform: translateY(-4px); }
+
+    .stars { color: var(--gold); font-size: 1rem; letter-spacing: 2px; margin-bottom: 1rem; }
+
+    .testimonial-text {
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.6;
+      margin-bottom: 1.4rem;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .author-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      background: var(--blush);
+    }
+
+    .author-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); }
+    .author-role { font-size: 0.78rem; color: var(--muted); }
+
+    /* ── CONTACT ── */
+    #contact { background: var(--white); }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .contact-info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .contact-icon {
+      width: 46px; height: 46px;
+      background: var(--blush);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .contact-detail strong { display: block; font-weight: 600; color: var(--dark); margin-bottom: 0.2rem; }
+    .contact-detail span { font-size: 0.9rem; color: var(--muted); }
+
+    /* FORM */
+    .form-card {
+      background: var(--cream);
+      border-radius: 24px;
+      padding: 2.5rem;
+      border: 1px solid rgba(201, 133, 106, 0.12);
+    }
+
+    .form-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--dark);
+      margin-bottom: 1.8rem;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .form-group { margin-bottom: 1.2rem; }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.85rem 1.1rem;
+      border: 1.5px solid rgba(201, 133, 106, 0.25);
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      color: var(--dark);
+      background: var(--white);
+      transition: border-color 0.25s, box-shadow 0.25s;
+      outline: none;
+      appearance: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--rose);
+      box-shadow: 0 0 0 4px rgba(201, 133, 106, 0.12);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: #c5b0a8; }
+
+    .form-group textarea { resize: vertical; min-height: 110px; }
+
+    .form-submit {
+      width: 100%;
+      padding: 1rem;
+      background: var(--rose);
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+      box-shadow: 0 6px 24px rgba(201, 133, 106, 0.35);
+      margin-top: 0.5rem;
+    }
+
+    .form-submit:hover { background: #b5735a; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(201, 133, 106, 0.45); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark);
+      color: rgba(255,255,255,0.6);
+      padding: 3.5rem 6% 2rem;
+    }
+
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 3rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 2rem;
+    }
+
+    .footer-brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--white);
+      margin-bottom: 0.75rem;
+    }
+
+    .footer-brand-name span { color: var(--gold); }
+
+    .footer-brand p { font-size: 0.88rem; line-height: 1.6; max-width: 280px; }
+
+    .footer-col h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--white);
+      margin-bottom: 1.2rem;
+    }
+
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 0.7rem; }
+    .footer-col a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 0.88rem; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--gold); }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .social-links { display: flex; gap: 1rem; }
+    .social-link {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background 0.25s;
+    }
+    .social-link:hover { background: rgba(201, 133, 106, 0.4); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      #hero, #about, .contact-layout { grid-template-columns: 1fr; gap: 3rem; }
+      .hero-visual { display: none; }
+      .about-visual { grid-template-columns: repeat(2, 1fr); max-width: 380px; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      nav ul { display: none; }
+      section { padding: 4rem 5%; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .hero-stats { gap: 1.5rem; }
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Bloom<span> Beauty</span></div>
+  <ul>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#contact" class="nav-cta">Book Now</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-text reveal">
+    <span class="hero-badge">✦ Welcome to Bloom Beauty</span>
+    <h1>Where Every Woman <em>Blooms</em> with Confidence</h1>
+    <p>Indulge in luxury beauty treatments tailored just for you. From radiant facials to stunning makeovers — your glow is our craft.</p>
+    <div class="btn-group">
+      <a href="#contact" class="btn-primary">Book Appointment</a>
+      <a href="#services" class="btn-outline">View Services</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">8+</div>
+        <div class="stat-label">Years Experience</div>
+      </div>
+      <div>
+        <div class="stat-num">2k+</div>
+        <div class="stat-label">Happy Clients</div>
+      </div>
+      <div>
+        <div class="stat-num">98%</div>
+        <div class="stat-label">Satisfaction Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-blob">🌸</div>
+    <div class="floating-card card-top">
+      <span class="card-icon">💅</span>
+      <div>
+        <strong style="font-size:0.85rem;color:#2b1f1a">New Gel Manicure</strong><br>
+        <span style="color:#8a7068;font-size:0.78rem">from $35</span>
+      </div>
+    </div>
+    <div class="floating-card card-bottom">
+      <span class="card-icon">⭐</span>
+      <div>
+        <strong style="font-size:0.85rem;color:#2b1f1a">5-Star Rated</strong><br>
+        <span style="color:#8a7068;font-size:0.78rem">on Google & Yelp</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-header reveal">
+    <div class="section-label">✦ What We Offer</div>
+    <h2 class="section-title">Our <em>Signature</em> Services</h2>
+    <p class="section-sub">Every treatment is crafted with premium products and expert hands to help you look and feel your absolute best.</p>
+  </div>
+
+  <div class="services-grid">
+
+    <div class="service-card reveal">
+      <span class="service-icon">💇‍♀️</span>
+      <div class="service-name">Hair Styling</div>
+      <p class="service-desc">From everyday blowouts to glamorous updos, our stylists bring your vision to life with precision and artistry.</p>
+      <ul class="price-list">
+        <li class="price-item"><span>Blowout &amp; Style</span><span class="price-amount">$45</span></li>
+        <li class="price-item"><span>Haircut &amp; Finish</span><span class="price-amount">$65</span></li>
+        <li class="price-item"><span>Balayage / Highlights</span><span class="price-amount">from $120</span></li>
+        <li class="price-item"><span>Full Colour</span><span class="price-amount">from $95</span></li>
+        <li class="price-item"><span>Bridal Updo</span><span class="price-amount">from $150</span></li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-icon">✨</span>
+      <div class="service-name">Facial Treatments</div>
+      <p class="service-desc">Restore radiance with our tailored facial rituals using clean, dermatologist-approved products.</p>
+      <ul class="price-list">
+        <li class="price-item"><span>Express Facial (30 min)</span><span class="price-amount">$55</span></li>
+        <li class="price-item"><span>Signature Hydra-Boost</span><span class="price-amount">$85</span></li>
+        <li class="price-item"><span>Anti-Aging Ritual</span><span class="price-amount">$110</span></li>
+        <li class="price-item"><span>Acne Clarifying</span><span class="price-amount">$90</span></li>
+        <li class="price-item"><span>LED + Microcurrent</span><span class="price-amount">$130</span></li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-icon">💅</span>
+      <div class="service-name">Nail Care</div>
+      <p class="service-desc">Flawless nails from classic polish to intricate nail art — long-lasting, gorgeous results every time.</p>
+      <ul class="price-list">
+        <li class="price-item"><span>Classic Manicure</span><span class="price-amount">$30</span></li>
+        <li class="price-item"><span>Gel Manicure</span><span class="price-amount">$45</span></li>
+        <li class="price-item"><span>Classic Pedicure</span><span class="price-amount">$40</span></li>
+        <li class="price-item"><span>Luxury Spa Pedicure</span><span class="price-amount">$65</span></li>
+        <li class="price-item"><span>Nail Art (per nail)</span><span class="price-amount">$5+</span></li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-icon">🌿</span>
+      <div class="service-name">Body &amp; Waxing</div>
+      <p class="service-desc">Silky-smooth skin with our gentle, effective waxing and body treatments using premium resins.</p>
+      <ul class="price-list">
+        <li class="price-item"><span>Eyebrow Shaping</span><span class="price-amount">$20</span></li>
+        <li class="price-item"><span>Upper Lip</span><span class="price-amount">$12</span></li>
+        <li class="price-item"><span>Full Leg Wax</span><span class="price-amount">$65</span></li>
+        <li class="price-item"><span>Bikini Line</span><span class="price-amount">$40</span></li>
+        <li class="price-item"><span>Full Body (90 min)</span><span class="price-amount">$150</span></li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-icon">👁️</span>
+      <div class="service-name">Eyes &amp; Brows</div>
+      <p class="service-desc">Frame your face perfectly with expert lash extensions, tints, and precision brow sculpting.</p>
+      <ul class="price-list">
+        <li class="price-item"><span>Classic Lash Set</span><span class="price-amount">$85</span></li>
+        <li class="price-item"><span>Volume Lash Set</span><span class="price-amount">$120</span></li>
+        <li class="price-item"><span>Lash Refill (2 wks)</span><span class="price-amount">$50</span></li>
+        <li class="price-item"><span>Brow Lamination</span><span class="price-amount">$60</span></li>
+        <li class="price-item"><span>Lash &amp; Brow Tint</span><span class="price-amount">$35</span></li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-icon">💋</span>
+      <div class="service-name">Makeup &amp; Bridal</div>
+      <p class="service-desc">Special occasion or full glam — our makeup artists create looks that photograph beautifully and last all day.</p>
+      <ul class="price-list">
+        <li class="price-item"><span>Day / Natural Look</span><span class="price-amount">$60</span></li>
+        <li class="price-item"><span>Evening / Party Glam</span><span class="price-amount">$85</span></li>
+        <li class="price-item"><span>Bridal Makeup</span><span class="price-amount">$150</span></li>
+        <li class="price-item"><span>Trial Run</span><span class="price-amount">$75</span></li>
+        <li class="price-item"><span>Wedding Party (each)</span><span class="price-amount">$70</span></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-visual reveal">
+    <div class="about-img">🌸</div>
+    <div class="about-img">💄</div>
+    <div class="about-img">🪷</div>
+    <div class="about-img">✨</div>
+  </div>
+
+  <div class="reveal">
+    <div class="section-label">✦ Our Story</div>
+    <h2 class="section-title">Beauty Is Our <em>Passion</em>, You Are Our Purpose</h2>
+    <p class="section-sub">Founded in 2017, Bloom Beauty was born from a simple belief: every woman deserves to feel radiant. We combine artistry, science, and warmth to create a sanctuary where beauty meets well-being.</p>
+
+    <ul class="feature-list">
+      <li class="feature-item">
+        <div class="feature-check">✓</div>
+        <div class="feature-text">
+          <strong>Certified &amp; Experienced Team</strong>
+          <span>All our specialists hold international beauty certifications with 5+ years of experience.</span>
+        </div>
+      </li>
+      <li class="feature-item">
+        <div class="feature-check">✓</div>
+        <div class="feature-text">
+          <strong>Premium Clean Products</strong>
+          <span>We use only cruelty-free, dermatologist-tested brands — kind to your skin and the planet.</span>
+        </div>
+      </li>
+      <li class="feature-item">
+        <div class="feature-check">✓</div>
+        <div class="feature-text">
+          <strong>Personalized Consultations</strong>
+          <span>Every visit starts with a tailored consultation to understand your unique beauty goals.</span>
+        </div>
+      </li>
+      <li class="feature-item">
+        <div class="feature-check">✓</div>
+        <div class="feature-text">
+          <strong>Hygiene &amp; Safety First</strong>
+          <span>Hospital-grade sanitation protocols and single-use tools — your safety is non-negotiable.</span>
+        </div>
+      </li>
+    </ul>
+
+    <a href="#contact" class="btn-primary" style="display:inline-block;margin-top:2rem;">Meet Our Team</a>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="section-header reveal" style="text-align:center;max-width:600px;margin:0 auto 3.5rem;">
+    <div class="section-label">✦ Client Love</div>
+    <h2 class="section-title">What Our Clients <em>Say</em></h2>
+    <p class="section-sub" style="margin:0 auto;">Don't take our word for it — here's what the Bloom Beauty community has to say.</p>
+  </div>
+
+  <div class="testimonials-grid">
+
+    <div class="testimonial-card reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"I walked in feeling tired and walked out glowing. The hydra-boost facial completely transformed my skin. The team is so warm and professional — I'm a client for life!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👩</div>
+        <div>
+          <div class="author-name">Sophie Laurent</div>
+          <div class="author-role">Regular Client since 2021</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"My bridal hair and makeup were absolutely perfect. Every detail was exactly what I'd dreamed of. I received so many compliments — Bloom Beauty made my day truly magical!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👰</div>
+        <div>
+          <div class="author-name">Emma Rodriguez</div>
+          <div class="author-role">Bridal Client</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"The volume lashes are stunning and lasted a full 3 weeks! The attention to detail is incredible. The salon itself is so beautiful and relaxing — a true luxury experience."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">🧖‍♀️</div>
+        <div>
+          <div class="author-name">Anika Patel</div>
+          <div class="author-role">Lash Client</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-layout">
+    <div class="reveal">
+      <div class="section-label">✦ Get In Touch</div>
+      <h2 class="section-title">Book Your <em>Appointment</em></h2>
+      <p class="section-sub" style="margin-bottom:2.5rem;">Ready to bloom? Reach out and we'll find the perfect time for you.</p>
+
+      <div class="contact-info-item">
+        <div class="contact-icon">📍</div>
+        <div class="contact-detail">
+          <strong>Our Location</strong>
+          <span>42 Rose Garden Lane, Suite 3<br>New York, NY 10012</span>
+        </div>
+      </div>
+
+      <div class="contact-info-item">
+        <div class="contact-icon">🕐</div>
+        <div class="contact-detail">
+          <strong>Opening Hours</strong>
+          <span>Mon–Fri: 9am – 7pm<br>Sat: 9am – 6pm &nbsp;|&nbsp; Sun: 10am – 4pm</span>
+        </div>
+      </div>
+
+      <div class="contact-info-item">
+        <div class="contact-icon">📞</div>
+        <div class="contact-detail">
+          <strong>Phone &amp; Email</strong>
+          <span>+1 (212) 555-0184<br>hello@bloombeautysalon.com</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card reveal">
+      <div class="form-title">Reserve Your Spot ✦</div>
+      <form>
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" placeholder="Emma" />
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" placeholder="Smith" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" placeholder="emma@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" placeholder="+1 (555) 000-0000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Service</label>
+          <select>
+            <option value="" disabled selected>Choose a service...</option>
+            <option>Hair Styling</option>
+            <option>Facial Treatment</option>
+            <option>Nail Care</option>
+            <option>Body &amp; Waxing</option>
+            <option>Eyes &amp; Brows</option>
+            <option>Makeup &amp; Bridal</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Preferred Date</label>
+            <input type="date" />
+          </div>
+          <div class="form-group">
+            <label>Preferred Time</label>
+            <select>
+              <option value="" disabled selected>Select time...</option>
+              <option>9:00 AM</option>
+              <option>10:00 AM</option>
+              <option>11:00 AM</option>
+              <option>12:00 PM</option>
+              <option>1:00 PM</option>
+              <option>2:00 PM</option>
+              <option>3:00 PM</option>
+              <option>4:00 PM</option>
+              <option>5:00 PM</option>
+              <option>6:00 PM</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Message (Optional)</label>
+          <textarea placeholder="Any special requests or questions?"></textarea>
+        </div>
+
+        <button type="submit" class="form-submit">Book My Appointment →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-brand-name">Bloom<span> Beauty</span></div>
+      <p>A sanctuary of beauty and wellness where every client is treated like royalty. Your glow is our greatest achievement.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#services">Hair Styling</a></li>
+        <li><a href="#services">Facial Treatments</a></li>
+        <li><a href="#services">Nail Care</a></li>
+        <li><a href="#services">Body &amp; Waxing</a></li>
+        <li><a href="#services">Eyes &amp; Brows</a></li>
+        <li><a href="#services">Makeup &amp; Bridal</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="#about">About Us</a></li>
+        <li><a href="#testimonials">Reviews</a></li>
+        <li><a href="#contact">Book Appointment</a></li>
+        <li><a href="#contact">Gift Cards</a></li>
+        <li><a href="#contact">Loyalty Program</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© 2024 Bloom Beauty Salon. All rights reserved.</span>
+    <div class="social-links">
+      <a class="social-link" href="#" title="Instagram">📷</a>
+      <a class="social-link" href="#" title="Facebook">📘</a>
+      <a class="social-link" href="#" title="TikTok">🎵</a>
+      <a class="social-link" href="#" title="Pinterest">📌</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.12 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Form submit
+  document.querySelector('form').addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('.form-submit');
+    btn.textContent = '✓ Booking Request Sent!';
+    btn.style.background = '#5a9e6f';
+    setTimeout(() => {
+      btn.textContent = 'Book My Appointment →';
+      btn.style.background = '';
+      e.target.reset();
+    }, 3000);
+  });
+</script>
+
+</body>
+</html>
