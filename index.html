@@ -19,7 +19,7 @@
     <li><a href="#services">Services</a></li>
     <li><a href="#about">About</a></li>
     <li><a href="#testimonials">Reviews</a></li>
-    <li><a href="#contact" class="nav-cta">Book Now</a></li>
+    <li><a href="#" class="nav-cta js-book-modal">Book Now</a></li>
   </ul>
   <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
 </nav>
@@ -32,7 +32,7 @@
     <h1>Where Every Woman <em>Blooms</em> with Confidence</h1>
     <p>Indulge in luxury beauty treatments tailored just for you. From radiant facials to stunning makeovers — your glow is our craft.</p>
     <div class="btn-group">
-      <a href="#contact" class="btn-primary">Book Appointment</a>
+      <a href="#" class="btn-primary js-book-modal">Book Appointment</a>
       <a href="#services" class="btn-outline">View Services</a>
     </div>
     <div class="hero-stats">
@@ -407,6 +407,49 @@
     </div>
   </div>
 </footer>
+
+<!-- BOOKING MODAL -->
+<div id="booking-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close booking form">✕</button>
+    <div class="modal-header">
+      <span class="modal-badge">✦ Bloom Beauty</span>
+      <h2 id="modal-title" class="modal-title">Book Your <em>Appointment</em></h2>
+      <p class="modal-sub">Fill in your details and we'll confirm your spot.</p>
+    </div>
+    <form id="modal-form" class="modal-form" novalidate>
+      <div class="form-group">
+        <label for="modal-name">Your Name</label>
+        <input type="text" id="modal-name" name="name" placeholder="Emma Smith" autocomplete="name" required />
+      </div>
+      <div class="form-group">
+        <label for="modal-phone">Phone Number</label>
+        <input type="tel" id="modal-phone" name="phone" placeholder="+1 (555) 000-0000" autocomplete="tel" required />
+      </div>
+      <div class="form-group">
+        <label for="modal-email">Email <span class="label-optional">(необов'язково)</span></label>
+        <input type="email" id="modal-email" name="email" placeholder="your@email.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="modal-service">Service</label>
+        <select id="modal-service" name="service" required>
+          <option value="" disabled selected>Choose a service...</option>
+          <option value="hair">Hair Styling</option>
+          <option value="facial">Facial Treatment</option>
+          <option value="nails">Nail Care</option>
+          <option value="waxing">Body &amp; Waxing</option>
+          <option value="eyes">Eyes &amp; Brows</option>
+          <option value="makeup">Makeup &amp; Bridal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="modal-date">Preferred Date</label>
+        <input type="date" id="modal-date" name="date" required />
+      </div>
+      <button type="submit" class="form-submit">Confirm Booking →</button>
+    </form>
+  </div>
+</div>
 
 <script src="js/main.js"></script>
 </body>
