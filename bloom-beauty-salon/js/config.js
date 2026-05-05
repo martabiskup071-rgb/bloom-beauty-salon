@@ -27,6 +27,9 @@ const BOT_USERNAME = 'dim_keratin_bot';
 // Змінити на свій пароль!
 const ADMIN_PASSWORD = 'keratin2026';
 
+// ── GOOGLE SHEETS (зберігання записів клієнтів) ─────────────
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwx4m-J4gt7CHM0tuIWaGEp7XfhxcvA7rbAUegeTx__pbfXK9ixW09xfg-gw4bypgmW/exec';
+
 
 // ── 2. РОЗКЛАД РОБОТИ ───────────────────────────────────────
 const SCHEDULE = {

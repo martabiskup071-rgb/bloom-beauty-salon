@@ -6,7 +6,28 @@
   <meta name="description" content="ДІМ КЕРАТИНУ — спеціалізований салон з відновлення волосся у Дрогобичі. Кератин, ботокс, нанопластика, холодне відновлення. Трітментолог Ангеліна Юркевич." />
   <title>ДІМ КЕРАТИНУ — Angelina Yurkevich hair studio</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── Flatpickr тема ДІМ КЕРАТИНУ ── */
+    .flatpickr-calendar { font-family:'Inter',sans-serif; border-radius:16px; box-shadow:0 16px 48px rgba(26,26,26,0.18); border:1px solid rgba(201,169,110,0.25); }
+    .flatpickr-months { background:#1A1A1A; border-radius:16px 16px 0 0; }
+    .flatpickr-month { color:#fff; fill:#fff; }
+    .flatpickr-current-month input.cur-year { color:#fff; }
+    .flatpickr-current-month .flatpickr-monthDropdown-months { color:#fff; background:#1A1A1A; }
+    .flatpickr-monthDropdown-months option { background:#1A1A1A; }
+    .flatpickr-prev-month svg, .flatpickr-next-month svg { fill:#C9A96E; }
+    .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill:#fff; }
+    .flatpickr-weekday { color:#C9A96E; font-weight:600; font-size:0.78rem; }
+    .flatpickr-day { border-radius:10px; color:#1A1A1A; font-size:0.88rem; }
+    .flatpickr-day:hover { background:#F5EFE6; border-color:transparent; }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover { background:#C9A96E; border-color:#C9A96E; color:#fff; font-weight:600; }
+    .flatpickr-day.today { border-color:#C9A96E; font-weight:600; }
+    .flatpickr-day.today:hover { background:#F5EFE6; }
+    .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color:#ccc; background:transparent; cursor:not-allowed; text-decoration:line-through; }
+    .flatpickr-day.nextMonthDay, .flatpickr-day.prevMonthDay { color:#ccc; }
+    #b-date { cursor:pointer; }
+  </style>
 </head>
 <body>
 
@@ -323,7 +344,7 @@
         <div class="form-row">
           <div class="form-group">
             <label for="b-date">Дата *</label>
-            <input type="date" id="b-date" name="date" required />
+            <input type="text" id="b-date" name="date" placeholder="Оберіть дату..." autocomplete="off" required readonly />
             <span id="date-hint" class="field-hint"></span>
           </div>
           <div class="form-group">
@@ -363,6 +384,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="js/config.js"></script>
 <script src="js/main.js"></script>
 </body>
