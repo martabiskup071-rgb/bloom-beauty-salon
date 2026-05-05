@@ -79,7 +79,13 @@ function doGet(e) {
               ? Utilities.formatDate(r[tIdx], Session.getScriptTimeZone(), 'HH:mm')
               : String(r[tIdx] || '');
           });
-        return jsonOk({ bookedTimes: booked });
+        // DEBUG: тимчасово, видалити після перевірки
+        const debugRows = bVals.slice(1).map(r => ({
+          date:   (r[dIdx] instanceof Date) ? Utilities.formatDate(r[dIdx], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(r[dIdx]||''),
+          status: String(r[sIdx]||''),
+          time:   (r[tIdx] instanceof Date) ? Utilities.formatDate(r[tIdx], Session.getScriptTimeZone(), 'HH:mm') : String(r[tIdx]||'')
+        }));
+        return jsonOk({ bookedTimes: booked, _debug: debugRows, _headers: headers, _dIdx: dIdx, _sIdx: sIdx });
       }
 
     }
