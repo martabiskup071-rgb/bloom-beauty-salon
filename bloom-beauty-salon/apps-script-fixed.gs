@@ -1,5 +1,32 @@
 const SECRET_KEY = 'DIM_KERATIN_ADMIN_2026';
 
+// Перетворює будь-яке значення дати → 'yyyy-MM-dd'
+function toDateStr(v) {
+  if (!v && v !== 0) return '';
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  const s = String(v).trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10); // вже ISO
+  try {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  } catch(e) {}
+  return s;
+}
+
+// Перетворює будь-яке значення часу → 'HH:mm'
+function toTimeStr(v) {
+  if (!v && v !== 0) return '';
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'HH:mm');
+  const s = String(v).trim();
+  if (/^\d{2}:\d{2}/.test(s)) return s.substring(0, 5); // вже HH:mm
+  try {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return Utilities.formatDate(d, Session.getScriptTimeZone(), 'HH:mm');
+  } catch(e) {}
+  return s;
+}
+
 function doPost(e) {
   try {
     const data  = JSON.parse(e.postData.contents);
@@ -22,8 +49,15 @@ function doPost(e) {
         if (String(values[i][0]) === String(data.id)) {
           if (data.status !== undefined) sheet.getRange(i+1,9).setValue(data.status);
           if (data.note   !== undefined) sheet.getRange(i+1,10).setValue(data.note);
-          if (data.date   !== undefined) sheet.getRange(i+1,6).setValue(data.date);
-          if (data.time   !== undefined) sheet.getRange(i+1,7).setValue(data.time);
+          if (data.date   !== undefined) {
+            // Зберігаємо дату як ISO рядок (yyyy-MM-dd) щоб уникнути проблем з форматом
+            const iso = toDateStr(data.date);
+            sheet.getRange(i+1,6).setValue(iso || data.date);
+          }
+          if (data.time   !== undefined) {
+            const hhmm = toTimeStr(data.time);
+            sheet.getRange(i+1,7).setValue(hhmm || data.time);
+          }
           return jsonOk({ updated: true });
         }
       }
@@ -58,34 +92,20 @@ function doGet(e) {
       }
 
       if (e.parameter.action === 'getAvailableSlots') {
-        const date    = e.parameter.date || '';
-        const bSheet  = getSheet();
-        const bVals   = bSheet.getDataRange().getValues();
+        const date   = e.parameter.date || '';
+        const bSheet = getSheet();
+        const bVals  = bSheet.getDataRange().getValues();
         const headers = bVals[0];
-        const dIdx    = headers.indexOf('date');
-        const tIdx    = headers.indexOf('time');
-        const sIdx    = headers.indexOf('status');
-        const booked  = bVals.slice(1)
+        const dIdx   = headers.indexOf('date');
+        const tIdx   = headers.indexOf('time');
+        const sIdx   = headers.indexOf('status');
+        const booked = bVals.slice(1)
           .filter(r => {
-            // Дата може бути Date-об'єктом або рядком
-            const rowDate = (r[dIdx] instanceof Date)
-              ? Utilities.formatDate(r[dIdx], Session.getScriptTimeZone(), 'yyyy-MM-dd')
-              : String(r[dIdx] || '');
-            return rowDate === date && String(r[sIdx]) === 'підтверджено';
+            const rowDate = toDateStr(r[dIdx]);
+            return rowDate === date && String(r[sIdx]).trim() === 'підтверджено';
           })
-          .map(r => {
-            // Час теж може бути Date-об'єктом (Sheets зберігає "14:00" як Date)
-            return (r[tIdx] instanceof Date)
-              ? Utilities.formatDate(r[tIdx], Session.getScriptTimeZone(), 'HH:mm')
-              : String(r[tIdx] || '');
-          });
-        // DEBUG: тимчасово, видалити після перевірки
-        const debugRows = bVals.slice(1).map(r => ({
-          date:   (r[dIdx] instanceof Date) ? Utilities.formatDate(r[dIdx], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(r[dIdx]||''),
-          status: String(r[sIdx]||''),
-          time:   (r[tIdx] instanceof Date) ? Utilities.formatDate(r[tIdx], Session.getScriptTimeZone(), 'HH:mm') : String(r[tIdx]||'')
-        }));
-        return jsonOk({ bookedTimes: booked, _debug: debugRows, _headers: headers, _dIdx: dIdx, _sIdx: sIdx });
+          .map(r => toTimeStr(r[tIdx]));
+        return jsonOk({ bookedTimes: booked });
       }
 
     }
