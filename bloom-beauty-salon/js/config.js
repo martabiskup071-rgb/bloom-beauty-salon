@@ -11,12 +11,12 @@
 
 // ── 1. TELEGRAM ─────────────────────────────────────────────
 // Токен бота (отримати у @BotFather — дивись TELEGRAM-SETUP.md)
-const BOT_TOKEN = 'ВАШ_ТОКЕН_БОТ';
+const BOT_TOKEN = '8758803173:AAHrUwxYc4w1z0U32QAVJ22ZrKGcCmIAJV0';
 
 // Хто отримує сповіщення про нові записи
 const RECIPIENTS = [
-  { name: 'Ангеліна', chat_id: 'CHAT_ID_ANGELINA' },
-  { name: 'Софія',    chat_id: 'CHAT_ID_SOFIA'    }
+  { name: 'Ангеліна', chat_id: '914794563' },
+  // { name: 'Софія', chat_id: 'CHAT_ID_SOFIA' }  // додати chat_id Софії
 ];
 
 // Username бота (без @), наприклад: 'dim_keratin_bot'
