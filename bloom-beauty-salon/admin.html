@@ -397,6 +397,9 @@
           <button class="header-btn btn-save" onclick="saveAll()">💾 Зберегти зміни</button>
         </div>
       </div>
+      <div class="schedule-info">
+        ℹ️ Зміни зберігаються в Google Sheets і автоматично синхронізуються з сайтом — клієнти побачать актуальні послуги при наступному відкритті сторінки.
+      </div>
       <div id="services-list"></div>
     </div>
 
@@ -528,9 +531,19 @@ function switchTab(name) {
 // ── SERVICES ──────────────────────────────────────────────────
 let currentServices = [];
 
-function loadServices() {
-  const saved = localStorage.getItem('dim_keratin_services');
-  currentServices = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(SERVICES));
+async function loadServices() {
+  if (typeof GOOGLE_SCRIPT_URL !== 'undefined' && !GOOGLE_SCRIPT_URL.includes('ВАШ')) {
+    try {
+      const res  = await fetch(`${GOOGLE_SCRIPT_URL}?action=getServices`);
+      const json = await res.json();
+      if (json.ok && json.services) {
+        currentServices = json.services;
+        renderAdminServices();
+        return;
+      }
+    } catch {}
+  }
+  currentServices = JSON.parse(JSON.stringify(SERVICES));
   renderAdminServices();
 }
 
@@ -625,9 +638,23 @@ function deletePrice(idx, pi) {
   container.innerHTML = currentServices[idx].prices.map((p, i) => buildPriceRow(idx, i, p)).join('');
 }
 
-function saveAll() {
-  localStorage.setItem('dim_keratin_services', JSON.stringify(currentServices));
-  showToast('✓ Послуги збережено!');
+async function saveAll() {
+  if (typeof GOOGLE_SCRIPT_URL === 'undefined' || GOOGLE_SCRIPT_URL.includes('ВАШ')) {
+    showToast('⚠️ Google Sheets не налаштований');
+    return;
+  }
+  try {
+    const res  = await fetch(GOOGLE_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify({ action: 'saveServices', key: ADMIN_SHEETS_KEY, services: currentServices })
+    });
+    const json = await res.json();
+    if (json.ok) showToast('✓ Послуги збережено і синхронізовано!');
+    else showToast('❌ Помилка: ' + (json.error || 'невідома'));
+  } catch {
+    showToast('❌ Немає з\'єднання');
+  }
 }
 
 // ── BOOKINGS ──────────────────────────────────────────────────
