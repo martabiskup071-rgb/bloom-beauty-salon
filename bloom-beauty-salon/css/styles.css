@@ -818,6 +818,14 @@ footer {
 
 .social-link:hover { background: rgba(201, 169, 110, 0.4); }
 
+.footer-credit {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.04em;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   #hero, #about, .contact-layout, .results-wrap { grid-template-columns: 1fr; gap: 3rem; }
