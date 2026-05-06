@@ -511,8 +511,8 @@ function doLogout() {
   location.reload();
 }
 
-function initAdmin() {
-  loadServices();
+async function initAdmin() {
+  await loadServices();
   loadBookings();
   loadScheduleTab();
 }
