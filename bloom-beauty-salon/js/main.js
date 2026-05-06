@@ -1,9 +1,23 @@
 // ─────────────────────────────────────────────
-//  ПОСЛУГИ — РЕНДЕР З config.js
+//  ПОСЛУГИ — ЗАВАНТАЖЕННЯ З GOOGLE SHEETS
 // ─────────────────────────────────────────────
-function renderServices() {
+async function loadAndRenderServices() {
+  if (typeof GOOGLE_SCRIPT_URL !== 'undefined' && GOOGLE_SCRIPT_URL !== 'ВАШ_APPS_SCRIPT_URL') {
+    try {
+      const res  = await fetch(`${GOOGLE_SCRIPT_URL}?action=getServices`);
+      const json = await res.json();
+      if (json.ok && json.services) {
+        renderServices(json.services);
+        return;
+      }
+    } catch { /* fallback to config.js */ }
+  }
+  renderServices(typeof SERVICES !== 'undefined' ? SERVICES : []);
+}
+
+function renderServices(servicesList) {
   const grid = document.getElementById('services-grid');
-  if (!grid || typeof SERVICES === 'undefined') return;
+  if (!grid) return;
 
   const serviceSelect = document.getElementById('b-service');
 
@@ -12,7 +26,7 @@ function renderServices() {
     serviceSelect.innerHTML = '<option value="" disabled selected>Обрати послугу...</option>';
   }
 
-  SERVICES.filter(s => s.active).forEach(service => {
+  servicesList.filter(s => s.active).forEach(service => {
     const priceRows = service.prices
       .map(p => `<li class="price-item"><span>${p.label}</span><span class="price-amount">${p.value}</span></li>`)
       .join('');
@@ -51,7 +65,7 @@ const observer = new IntersectionObserver(
   { threshold: 0.12 }
 );
 
-renderServices();
+loadAndRenderServices();
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 // ─────────────────────────────────────────────

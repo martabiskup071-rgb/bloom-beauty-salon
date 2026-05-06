@@ -75,6 +75,16 @@ function doPost(e) {
       return jsonOk({ saved: true });
     }
 
+    if (data.action === 'saveServices') {
+      if (data.key !== SECRET_KEY) return jsonError('Unauthorized');
+      const svSheet = getServicesSheet();
+      svSheet.clearContents();
+      svSheet.appendRow(['key', 'value']);
+      svSheet.getRange(1,1,1,2).setFontWeight('bold');
+      svSheet.appendRow(['services', JSON.stringify(data.services || [])]);
+      return jsonOk({ saved: true });
+    }
+
     return jsonError('Unknown action');
   } catch(err) { return jsonError(err.toString()); }
 }
@@ -82,6 +92,17 @@ function doPost(e) {
 function doGet(e) {
   try {
     if (e && e.parameter) {
+
+      if (e.parameter.action === 'getServices') {
+        const svSheet = getServicesSheet();
+        const vals = svSheet.getDataRange().getValues();
+        for (const row of vals) {
+          if (String(row[0]) === 'services') {
+            return jsonOk({ services: JSON.parse(String(row[1])) });
+          }
+        }
+        return jsonOk({ services: null });
+      }
 
       if (e.parameter.action === 'getSchedule') {
         const sSheet = getSettingsSheet();
@@ -149,6 +170,17 @@ function getSettingsSheet() {
   let sheet = ss.getSheetByName('Налаштування');
   if (!sheet) {
     sheet = ss.insertSheet('Налаштування');
+    sheet.appendRow(['key', 'value']);
+    sheet.getRange(1,1,1,2).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function getServicesSheet() {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Послуги');
+  if (!sheet) {
+    sheet = ss.insertSheet('Послуги');
     sheet.appendRow(['key', 'value']);
     sheet.getRange(1,1,1,2).setFontWeight('bold');
   }
