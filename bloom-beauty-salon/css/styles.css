@@ -591,6 +591,14 @@ section { padding: 6rem 6%; }
 
 .contact-intro { margin-bottom: 1.5rem; }
 
+.map-wrap {
+  margin-top: 2rem;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 169, 110, 0.25);
+  box-shadow: 0 8px 32px rgba(26, 26, 26, 0.08);
+}
+
 /* FORM */
 .form-card {
   background: var(--cream);
