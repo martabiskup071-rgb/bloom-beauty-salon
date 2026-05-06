@@ -536,7 +536,7 @@ async function loadServices() {
     try {
       const res  = await fetch(`${GOOGLE_SCRIPT_URL}?action=getServices`);
       const json = await res.json();
-      if (json.ok && json.services) {
+      if (json.ok && Array.isArray(json.services) && json.services.length > 0) {
         currentServices = json.services;
         renderAdminServices();
         return;
