@@ -28,7 +28,7 @@ const BOT_USERNAME = 'dim_keratin_bot';
 const ADMIN_PASSWORD = 'keratin2026';
 
 // ── GOOGLE SHEETS (зберігання записів клієнтів) ─────────────
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9tOztWVoAlB75MfflIgarCLIHWrZhad5hVpnw1HYUdKbFlxTLs8Wh1eAUxHt4VVTO/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxccK5BGRE5BfUc0_y_GUlxrVnhd1tG0Y4qSsDnwDbAGRL2MH0JUgbbVuGEBazdcIh9/exec';
 
 
 // ── 2. РОЗКЛАД РОБОТИ ───────────────────────────────────────
