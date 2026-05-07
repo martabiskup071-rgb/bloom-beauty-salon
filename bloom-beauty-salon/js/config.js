@@ -14,7 +14,7 @@
 
 // ── GOOGLE SHEETS (зберігання записів клієнтів) ─────────────
 // Замінити на свій URL після деплою Apps Script
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt_EKoSpLEysvaLIk1Q2nQN1H4lWKgouyeL7f8qwh3YThRbTPOo1u9el2b0f_Jdtda/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTmM_ud4eXpBeTqATajxAwpVBWhq2cehBndiQrh2dkSgzRvgUh_bzvcphIvPeEqiLK/exec';
 
 
 // ── 1. РОЗКЛАД РОБОТИ ───────────────────────────────────────
