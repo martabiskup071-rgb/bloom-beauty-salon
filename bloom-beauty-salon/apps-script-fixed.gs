@@ -229,6 +229,28 @@ function sendSMS(phone, text) {
   }
 }
 
+// ── reCAPTCHA v3 верифікація ─────────────────────────────────
+function verifyRecaptcha(token) {
+  const secret = getProp('RECAPTCHA_SECRET');
+  if (!secret || !token) return true; // якщо не налаштовано — пропускаємо
+  try {
+    const resp = UrlFetchApp.fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method:             'post',
+      payload:            { secret: secret, response: token },
+      muteHttpExceptions: true
+    });
+    const result = JSON.parse(resp.getContentText());
+    Logger.log('reCAPTCHA score: ' + JSON.stringify({ success: result.success, score: result.score }));
+    // score >= 0.5 = людина; < 0.5 = підозрілий
+    // При мережевій помилці (success=false без score) — пропускаємо
+    if (!result.success) return true;
+    return result.score === undefined || result.score >= 0.5;
+  } catch(err) {
+    Logger.log('reCAPTCHA помилка: ' + err);
+    return true; // при помилці — пропускаємо (не блокуємо реальних клієнтів)
+  }
+}
+
 // ── Щоденна розсилка нагадувань ──────────────────────────────
 function sendReminders() {
   const sheet  = getSheet();
@@ -311,6 +333,9 @@ function doPost(e) {
 
       // Timing: форма заповнена менш ніж за 3 секунди — бот
       if (typeof data._ft === 'number' && data._ft < 3) return jsonOk({ saved: true });
+
+      // reCAPTCHA v3: score < 0.5 = бот → мовчки ігноруємо
+      if (!verifyRecaptcha(data._rc)) return jsonOk({ saved: true });
 
       // Rate limiting
       if (!checkRateLimit()) return jsonError('Забагато запитів. Спробуйте пізніше.');

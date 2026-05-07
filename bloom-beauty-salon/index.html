@@ -31,6 +31,8 @@
     .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color:#ccc; background:transparent; cursor:not-allowed; text-decoration:line-through; }
     .flatpickr-day.nextMonthDay, .flatpickr-day.prevMonthDay { color:#ccc; }
     #b-date { cursor:pointer; }
+    /* reCAPTCHA badge прихований — замінено текстом у формі (відповідно до умов Google) */
+    .grecaptcha-badge { visibility: hidden !important; }
   </style>
 </head>
 <body>
@@ -383,6 +385,11 @@
           style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true" />
 
         <button type="submit" class="form-submit" id="booking-btn">Записатись →</button>
+        <p style="font-size:0.72rem;color:#b0a89a;text-align:center;margin-top:0.7rem;">
+          Захищено reCAPTCHA ·
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:#b0a89a;">Конфіденційність</a> ·
+          <a href="https://policies.google.com/terms"   target="_blank" rel="noopener noreferrer" style="color:#b0a89a;">Умови</a>
+        </p>
       </form>
     </div>
 
@@ -406,6 +413,7 @@
   </div>
 </div>
 
+<script src="https://www.google.com/recaptcha/api.js?render=6Lfh7N0sAAAAADFuQERjoq0lK5mVzfGAwXldL2Rd"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="js/config.js"></script>
 <script src="js/main.js"></script>
