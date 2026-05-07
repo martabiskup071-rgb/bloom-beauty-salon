@@ -171,6 +171,33 @@ function notifyClient(data) {
   }
 }
 
+// ── Telegram: сповіщення при вході в адмін-панель ────────────
+function notifyAdminLogin() {
+  const botToken   = getProp('BOT_TOKEN');
+  if (!botToken) return;
+  const recipients = JSON.parse(getProp('RECIPIENTS') || '[]');
+  if (!recipients.length) return;
+
+  const now     = new Date();
+  const timeStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
+  const text    =
+    `🔐 <b>Вхід в адмін-панель</b>\n` +
+    `📅 <b>Час:</b> ${timeStr}\n\n` +
+    `⚠️ Якщо це не ви — негайно змініть пароль у Script Properties.`;
+
+  recipients.forEach(function(recipient) {
+    if (!recipient.chat_id || String(recipient.chat_id).startsWith('CHAT_ID')) return;
+    try {
+      UrlFetchApp.fetch('https://api.telegram.org/bot' + botToken + '/sendMessage', {
+        method:             'post',
+        contentType:        'application/json',
+        payload:            JSON.stringify({ chat_id: recipient.chat_id, text: text, parse_mode: 'HTML' }),
+        muteHttpExceptions: true
+      });
+    } catch(err) { Logger.log('notifyAdminLogin помилка: ' + err); }
+  });
+}
+
 // ── TurboSMS ─────────────────────────────────────────────────
 function sendSMS(phone, text) {
   const token  = getProp('TURBOSMS_TOKEN');
@@ -199,6 +226,28 @@ function sendSMS(phone, text) {
   } catch(err) {
     Logger.log('TurboSMS помилка: ' + err.toString());
     return false;
+  }
+}
+
+// ── reCAPTCHA v3 верифікація ─────────────────────────────────
+function verifyRecaptcha(token) {
+  const secret = getProp('RECAPTCHA_SECRET');
+  if (!secret || !token) return true; // якщо не налаштовано — пропускаємо
+  try {
+    const resp = UrlFetchApp.fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method:             'post',
+      payload:            { secret: secret, response: token },
+      muteHttpExceptions: true
+    });
+    const result = JSON.parse(resp.getContentText());
+    Logger.log('reCAPTCHA score: ' + JSON.stringify({ success: result.success, score: result.score }));
+    // score >= 0.5 = людина; < 0.5 = підозрілий
+    // При мережевій помилці (success=false без score) — пропускаємо
+    if (!result.success) return true;
+    return result.score === undefined || result.score >= 0.5;
+  } catch(err) {
+    Logger.log('reCAPTCHA помилка: ' + err);
+    return true; // при помилці — пропускаємо (не блокуємо реальних клієнтів)
   }
 }
 
@@ -266,7 +315,9 @@ function doPost(e) {
         Utilities.sleep(500); // захист від brute-force
         return jsonError('Unauthorized');
       }
-      return jsonOk({ token: createSession() });
+      const token = createSession();
+      notifyAdminLogin();
+      return jsonOk({ token });
     }
 
     // ── Logout ──
@@ -279,6 +330,12 @@ function doPost(e) {
     if (data.action === 'add') {
       // Honeypot: якщо заповнено — бот
       if (data._hp) return jsonOk({ saved: true }); // мовчки ігнорувати
+
+      // Timing: форма заповнена менш ніж за 3 секунди — бот
+      if (typeof data._ft === 'number' && data._ft < 3) return jsonOk({ saved: true });
+
+      // reCAPTCHA v3: score < 0.5 = бот → мовчки ігноруємо
+      if (!verifyRecaptcha(data._rc)) return jsonOk({ saved: true });
 
       // Rate limiting
       if (!checkRateLimit()) return jsonError('Забагато запитів. Спробуйте пізніше.');

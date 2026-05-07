@@ -112,6 +112,7 @@ let lastFocused    = null;
 
 function openBookingModal() {
   lastFocused = document.activeElement;
+  window._formOpenTime = Date.now(); // ← захист від ботів (timing check)
   bookingModal.classList.add('is-open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => {
@@ -329,13 +330,35 @@ if (bookingForm) {
     bookingBtn.disabled    = true;
 
     try {
+      const _ft = Math.round((Date.now() - (window._formOpenTime || 0)) / 1000);
+
+      // reCAPTCHA v3 — невидимо отримуємо токен
+      let _rc = '';
+      if (typeof grecaptcha !== 'undefined') {
+        try {
+          _rc = await new Promise(resolve => {
+            grecaptcha.ready(async () => {
+              try {
+                const token = await grecaptcha.execute(
+                  '6Lfh7N0sAAAAADFuQERjoq0lK5mVzfGAwXldL2Rd',
+                  { action: 'booking' }
+                );
+                resolve(token);
+              } catch { resolve(''); }
+            });
+          });
+        } catch { /* продовжуємо без токена */ }
+      }
+
       await fetch(GOOGLE_SCRIPT_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body:    JSON.stringify({
           action: 'add',
           name, phone, telegram, service, date, time, message,
-          _hp: hp  // honeypot (порожній у людей, заповнений у ботів)
+          _hp: hp, // honeypot (порожній у людей, заповнений у ботів)
+          _ft,     // час заповнення форми у секундах (< 3 = бот)
+          _rc      // reCAPTCHA v3 token
         })
       });
     } catch {

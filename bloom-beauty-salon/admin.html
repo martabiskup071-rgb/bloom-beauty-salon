@@ -6,6 +6,8 @@
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://script.google.com https://script.googleusercontent.com; frame-ancestors 'none';" />
   <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
   <title>Адмін — ДІМ КЕРАТИНУ</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -514,6 +516,7 @@ async function doLogin() {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'block';
       initAdmin();
+      startIdleTimer();
     } else {
       document.getElementById('login-error').style.display = 'block';
       document.getElementById('pwd-input').value = '';
@@ -550,6 +553,23 @@ async function initAdmin() {
   await loadServices();
   loadBookings();
   loadScheduleTab();
+}
+
+// ── Авто-вихід після 30 хв бездіяльності ─────────────────────
+let _idleTimer = null;
+
+function resetIdleTimer() {
+  clearTimeout(_idleTimer);
+  _idleTimer = setTimeout(function() {
+    doLogout(); // тихо виходимо
+  }, 30 * 60 * 1000); // 30 хвилин
+}
+
+function startIdleTimer() {
+  ['click', 'keydown', 'mousemove', 'touchstart'].forEach(function(evt) {
+    document.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
+  resetIdleTimer();
 }
 
 // ── TABS ──────────────────────────────────────────────────────
@@ -1190,6 +1210,7 @@ function escHtml(str) {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'block';
       initAdmin();
+      startIdleTimer();
     } else {
       sessionStorage.removeItem('admin_token');
     }
