@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com; frame-src https://www.google.com; connect-src https://script.google.com https://script.googleusercontent.com; frame-ancestors 'none';" />
+    content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com; frame-src https://www.google.com; connect-src https://script.google.com https://script.googleusercontent.com; frame-ancestors 'none';" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
   <meta name="description" content="ДІМ КЕРАТИНУ — спеціалізований салон з відновлення волосся у Дрогобичі. Кератин, ботокс, нанопластика, холодне відновлення. Трітментолог Ангеліна Юркевич." />
   <title>ДІМ КЕРАТИНУ — Angelina Yurkevich hair studio</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -306,7 +308,7 @@
         <li><a href="#results">Наші роботи</a></li>
         <li><a href="#testimonials">Відгуки</a></li>
         <li><a href="#contact">Записатись онлайн</a></li>
-        <li><a href="https://www.instagram.com/yurkevich_keratin" target="_blank">Instagram</a></li>
+        <li><a href="https://www.instagram.com/yurkevich_keratin" target="_blank" rel="noopener noreferrer">Instagram</a></li>
       </ul>
     </div>
   </div>
@@ -314,7 +316,7 @@
   <div class="footer-bottom">
     <span>© 2026 ДІМ КЕРАТИНУ · Angelina Yurkevich hair studio · Дрогобич</span>
     <div class="social-links">
-      <a class="social-link" href="https://www.instagram.com/yurkevich_keratin" target="_blank" aria-label="Instagram">📷</a>
+      <a class="social-link" href="https://www.instagram.com/yurkevich_keratin" target="_blank" rel="noopener noreferrer" aria-label="Instagram">📷</a>
       <a class="social-link" href="#contact" aria-label="Записатись">🗓</a>
       <a class="social-link" href="tel:+380734428219" aria-label="Телефон">📞</a>
     </div>
