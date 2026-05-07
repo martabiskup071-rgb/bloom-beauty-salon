@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://script.google.com https://script.googleusercontent.com; frame-ancestors 'none';" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>Адмін — ДІМ КЕРАТИНУ</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -485,20 +488,42 @@
 
 <script src="js/config.js"></script>
 <script>
-// ── КОНФІГ АДМІН-ПАНЕЛІ ──────────────────────────────────────
-const ADMIN_SHEETS_KEY = 'DIM_KERATIN_ADMIN_2026';
+// ── AUTH (сервер-side) ────────────────────────────────────────
+function getSessionToken() {
+  return sessionStorage.getItem('admin_token') || '';
+}
 
-// ── AUTH ──────────────────────────────────────────────────────
-function doLogin() {
+async function doLogin() {
   const pwd = document.getElementById('pwd-input').value;
-  if (pwd === ADMIN_PASSWORD) {
-    sessionStorage.setItem('admin_auth', '1');
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
-    initAdmin();
-  } else {
+  if (!pwd) return;
+
+  const loginBtn = document.querySelector('.login-btn');
+  loginBtn.textContent = 'Перевірка...';
+  loginBtn.disabled    = true;
+
+  try {
+    const res  = await fetch(GOOGLE_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify({ action: 'login', password: pwd })
+    });
+    const json = await res.json();
+
+    if (json.ok && json.token) {
+      sessionStorage.setItem('admin_token', json.token);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      initAdmin();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('pwd-input').value = '';
+    }
+  } catch {
+    document.getElementById('login-error').textContent = 'Помилка з\'єднання';
     document.getElementById('login-error').style.display = 'block';
-    document.getElementById('pwd-input').value = '';
+  } finally {
+    loginBtn.textContent = 'Увійти';
+    loginBtn.disabled    = false;
   }
 }
 
@@ -506,8 +531,18 @@ document.getElementById('pwd-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
-function doLogout() {
-  sessionStorage.removeItem('admin_auth');
+async function doLogout() {
+  const token = getSessionToken();
+  sessionStorage.removeItem('admin_token');
+  if (token) {
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body:    JSON.stringify({ action: 'logout', token })
+      });
+    } catch {}
+  }
   location.reload();
 }
 
@@ -647,7 +682,7 @@ async function saveAll() {
     const res  = await fetch(GOOGLE_SCRIPT_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body:    JSON.stringify({ action: 'saveServices', key: ADMIN_SHEETS_KEY, services: currentServices })
+      body:    JSON.stringify({ action: 'saveServices', key: getSessionToken(), services: currentServices })
     });
     const json = await res.json();
     if (json.ok) showToast('✓ Послуги збережено і синхронізовано!');
@@ -671,8 +706,11 @@ async function loadBookings() {
   }
 
   try {
-    const url = `${GOOGLE_SCRIPT_URL}?action=getAll&key=${ADMIN_SHEETS_KEY}`;
-    const res  = await fetch(url);
+    const res  = await fetch(GOOGLE_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify({ action: 'getAll', key: getSessionToken() })
+    });
     const json = await res.json();
 
     if (!json.ok) {
@@ -852,7 +890,7 @@ async function saveBookingChanges(id) {
 
   const payload = {
     action: 'update',
-    key:    ADMIN_SHEETS_KEY,
+    key:    getSessionToken(),
     id,
     status,
     note,
@@ -1102,7 +1140,7 @@ async function saveSchedule() {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action:      'saveSchedule',
-        key:         ADMIN_SHEETS_KEY,
+        key:         getSessionToken(),
         workDays:    adminSchedule.workDays,
         timeSlots:   adminSchedule.timeSlots,
         holidays:    adminSchedule.holidays,
@@ -1137,11 +1175,28 @@ function escHtml(str) {
 }
 
 // ── AUTO-LOGIN (після всіх оголошень) ─────────────────────────
-if (sessionStorage.getItem('admin_auth') === '1') {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('admin-panel').style.display = 'block';
-  initAdmin();
-}
+// Відновлення сесії якщо токен ще активний (8 годин)
+(async function() {
+  const token = sessionStorage.getItem('admin_token');
+  if (!token) return;
+  try {
+    const res  = await fetch(GOOGLE_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify({ action: 'getAll', key: token })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      initAdmin();
+    } else {
+      sessionStorage.removeItem('admin_token');
+    }
+  } catch {
+    sessionStorage.removeItem('admin_token');
+  }
+})();
 </script>
 <footer style="text-align:center;padding:1.5rem;font-size:0.75rem;color:#b0a89a;letter-spacing:0.04em;">
   Розроблено Крива Марта

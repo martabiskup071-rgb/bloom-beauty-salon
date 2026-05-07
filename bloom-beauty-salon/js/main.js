@@ -1,4 +1,13 @@
 // ─────────────────────────────────────────────
+//  УТИЛІТА: екранування HTML (захист від XSS)
+// ─────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────
 //  ПОСЛУГИ — ЗАВАНТАЖЕННЯ З GOOGLE SHEETS
 // ─────────────────────────────────────────────
 async function loadAndRenderServices() {
@@ -27,23 +36,50 @@ function renderServices(servicesList) {
   }
 
   servicesList.filter(s => s.active).forEach(service => {
-    const priceRows = service.prices
-      .map(p => `<li class="price-item"><span>${p.label}</span><span class="price-amount">${p.value}</span></li>`)
-      .join('');
-
     const card = document.createElement('div');
     card.className = 'service-card reveal';
-    card.innerHTML = `
-      <span class="service-icon">${service.icon}</span>
-      <h3 class="service-name">${service.name}</h3>
-      <p class="service-desc">${service.desc}</p>
-      <ul class="price-list">${priceRows}</ul>
-      <a href="#contact" class="service-cta">Записатись →</a>
-    `;
+
+    const icon = document.createElement('span');
+    icon.className   = 'service-icon';
+    icon.textContent = service.icon;
+
+    const title = document.createElement('h3');
+    title.className   = 'service-name';
+    title.textContent = service.name;
+
+    const desc = document.createElement('p');
+    desc.className   = 'service-desc';
+    desc.textContent = service.desc;
+
+    const priceList = document.createElement('ul');
+    priceList.className = 'price-list';
+    (service.prices || []).forEach(p => {
+      const li    = document.createElement('li');
+      li.className = 'price-item';
+      const lbl   = document.createElement('span');
+      lbl.textContent = p.label;
+      const val   = document.createElement('span');
+      val.className   = 'price-amount';
+      val.textContent = p.value;
+      li.appendChild(lbl);
+      li.appendChild(val);
+      priceList.appendChild(li);
+    });
+
+    const cta = document.createElement('a');
+    cta.href      = '#contact';
+    cta.className = 'service-cta';
+    cta.textContent = 'Записатись →';
+
+    card.appendChild(icon);
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(priceList);
+    card.appendChild(cta);
     grid.appendChild(card);
 
     if (serviceSelect) {
-      const opt = document.createElement('option');
+      const opt       = document.createElement('option');
       opt.value       = service.name;
       opt.textContent = `${service.icon} ${service.name}`;
       const firstPrice = service.prices[0];
@@ -187,12 +223,11 @@ loadRemoteSchedule().then(() => initFlatpickr());
 async function fetchBookedSlots(dateStr) {
   if (typeof GOOGLE_SCRIPT_URL === 'undefined' || GOOGLE_SCRIPT_URL === 'ВАШ_APPS_SCRIPT_URL') return [];
   try {
-    const res  = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAvailableSlots&date=${dateStr}`);
-    const json = await res.json();
-    console.log('🔍 getAvailableSlots для', dateStr, '→', json);
+    const safeDate = encodeURIComponent(dateStr);
+    const res      = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAvailableSlots&date=${safeDate}`);
+    const json     = await res.json();
     return json.bookedTimes || [];
-  } catch (err) {
-    console.error('❌ fetchBookedSlots помилка:', err);
+  } catch {
     return [];
   }
 }
@@ -229,12 +264,9 @@ async function updateTimeSlots(dateStr) {
 
   if (dateHint) dateHint.textContent = '';
 
-  // Всі слоти для цього дня
-  const allSlots = SCHEDULE.specialDays[dateStr] || SCHEDULE.timeSlots;
-
-  // Перевіряємо зайняті (підтверджені) записи
+  const allSlots   = SCHEDULE.specialDays[dateStr] || SCHEDULE.timeSlots;
   const bookedTimes = await fetchBookedSlots(dateStr);
-  const freeSlots   = allSlots.filter(t => !bookedTimes.includes(t));
+  const freeSlots  = allSlots.filter(t => !bookedTimes.includes(t));
 
   if (freeSlots.length === 0) {
     timeSelect.innerHTML = '<option value="" disabled selected>😔 Всі місця зайняті</option>';
@@ -254,102 +286,11 @@ async function updateTimeSlots(dateStr) {
 }
 
 // ─────────────────────────────────────────────
-//  GOOGLE SHEETS — ЗБЕРЕГТИ ЗАПИС
+//  ВАЛІДАЦІЯ ТЕЛЕФОНУ (клієнтська сторона)
 // ─────────────────────────────────────────────
-async function saveToSheets(data) {
-  if (typeof GOOGLE_SCRIPT_URL === 'undefined' || GOOGLE_SCRIPT_URL === 'ВАШ_APPS_SCRIPT_URL') {
-    console.warn('📋 Google Sheets не налаштований. Дивись GOOGLE-SHEETS-SETUP.md');
-    return;
-  }
-  try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body:    JSON.stringify({ action: 'add', ...data, created_at: new Date().toISOString() })
-    });
-  } catch (err) {
-    console.error('Помилка збереження в Google Sheets:', err);
-  }
-}
-
-// ─────────────────────────────────────────────
-//  TELEGRAM — НАДІСЛАТИ ВСІМ ОТРИМУВАЧАМ
-// ─────────────────────────────────────────────
-async function notifyStaff(data) {
-  if (BOT_TOKEN === 'ВАШ_ТОКЕН_БОТ') {
-    console.warn('Telegram не налаштований. Дивись TELEGRAM-SETUP.md');
-    return;
-  }
-
-  const dateObj = new Date(data.date + 'T12:00:00');
-  const dateStr = dateObj.toLocaleDateString('uk-UA', {
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-
-  const text =
-    `🔔 <b>Новий запис!</b>\n\n` +
-    `👤 <b>Ім'я:</b> ${data.name}\n` +
-    `📞 <b>Телефон:</b> ${data.phone}\n` +
-    (data.telegram ? `💬 <b>Telegram:</b> @${data.telegram.replace('@', '')}\n` : '') +
-    `💇 <b>Послуга:</b> ${data.service}\n` +
-    `📅 <b>Дата:</b> ${dateStr}\n` +
-    `🕐 <b>Час:</b> ${data.time}\n` +
-    (data.message ? `📝 <b>Коментар:</b> ${data.message}\n` : '') +
-    `\n——\n📩 Запис з сайту ДІМ КЕРАТИНУ`;
-
-  for (const recipient of RECIPIENTS) {
-    if (!recipient.chat_id || recipient.chat_id.startsWith('CHAT_ID')) continue;
-    try {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ chat_id: recipient.chat_id, text, parse_mode: 'HTML' })
-      });
-    } catch (err) {
-      console.error(`Помилка надсилання до ${recipient.name}:`, err);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────
-//  TELEGRAM — ПІДТВЕРДЖЕННЯ КЛІЄНТУ
-// ─────────────────────────────────────────────
-async function notifyClient(data) {
-  if (BOT_TOKEN === 'ВАШ_ТОКЕН_БОТ') return;
-  if (!data.telegram) return;
-
-  const username = data.telegram.replace('@', '');
-  const dateObj  = new Date(data.date + 'T12:00:00');
-  const dateStr  = dateObj.toLocaleDateString('uk-UA', {
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-
-  const text =
-    `✅ <b>Ваш запис прийнято!</b>\n\n` +
-    `💇 <b>Послуга:</b> ${data.service}\n` +
-    `📅 <b>Дата:</b> ${dateStr}\n` +
-    `🕐 <b>Час:</b> ${data.time}\n` +
-    `📍 <b>Адреса:</b> вул. Стрийська, 73, Дрогобич\n\n` +
-    `До зустрічі в ДІМ КЕРАТИНУ! ✨\n` +
-    `Якщо потрібно перенести — напишіть нам: @${BOT_USERNAME}`;
-
-  try {
-    const getChat = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChat`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ chat_id: `@${username}` })
-    });
-    const chatData = await getChat.json();
-    if (!chatData.ok) return;
-
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ chat_id: chatData.result.id, text, parse_mode: 'HTML' })
-    });
-  } catch (err) {
-    console.error('Помилка сповіщення клієнта:', err);
-  }
+function isValidPhone(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 13;
 }
 
 // ─────────────────────────────────────────────
@@ -371,25 +312,37 @@ if (bookingForm) {
     const date     = document.getElementById('b-date').value;
     const time     = document.getElementById('b-time').value;
     const message  = document.getElementById('b-message').value.trim();
+    // Honeypot — якщо заповнено, тихо відхилити
+    const hp       = document.getElementById('b-hp')?.value || '';
 
     if (!name || !phone || !service || !date || !time) {
       showFormError('Будь ласка, заповніть всі поля зі зірочкою (*)');
       return;
     }
 
+    if (!isValidPhone(phone)) {
+      showFormError('Введіть коректний номер телефону');
+      return;
+    }
+
     bookingBtn.textContent = 'Надсилаємо...';
     bookingBtn.disabled    = true;
 
-    const data = { name, phone, telegram, service, date, time, message };
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body:    JSON.stringify({
+          action: 'add',
+          name, phone, telegram, service, date, time, message,
+          _hp: hp  // honeypot (порожній у людей, заповнений у ботів)
+        })
+      });
+    } catch {
+      // не блокуємо UX — запис міг зберегтись
+    }
 
-    // Паралельно: Telegram + Google Sheets
-    await Promise.all([
-      notifyStaff(data),
-      notifyClient(data),
-      saveToSheets(data)
-    ]);
-
-    fillSuccessScreen(data);
+    fillSuccessScreen({ name, service, date, time, telegram });
     document.getElementById('bmodal-form-wrap').style.display = 'none';
     bookingSuccess.style.display = 'flex';
   });
@@ -406,14 +359,7 @@ function fillSuccessScreen(data) {
   document.getElementById('success-time').textContent    = data.time;
 
   const tgNote = document.getElementById('success-tg-note');
-  if (data.telegram && BOT_TOKEN !== 'ВАШ_ТОКЕН_БОТ') {
-    tgNote.style.display = 'block';
-  } else {
-    tgNote.style.display = 'none';
-  }
-
-  const tgLink = document.getElementById('success-tg-link');
-  if (tgLink) tgLink.href = `https://t.me/${BOT_USERNAME}`;
+  if (tgNote) tgNote.style.display = data.telegram ? 'block' : 'none';
 }
 
 window.resetBookingForm = function () {
