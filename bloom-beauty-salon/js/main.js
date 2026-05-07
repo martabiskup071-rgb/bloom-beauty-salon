@@ -380,9 +380,6 @@ function fillSuccessScreen(data) {
   document.getElementById('success-service').textContent = data.service;
   document.getElementById('success-date').textContent    = dateStr;
   document.getElementById('success-time').textContent    = data.time;
-
-  const tgNote = document.getElementById('success-tg-note');
-  if (tgNote) tgNote.style.display = data.telegram ? 'block' : 'none';
 }
 
 window.resetBookingForm = function () {
