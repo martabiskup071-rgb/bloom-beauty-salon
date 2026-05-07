@@ -1,20 +1,70 @@
-const SECRET_KEY = 'DIM_KERATIN_ADMIN_2026';
+// ════════════════════════════════════════════════════════════
+//  ДІМ КЕРАТИНУ — Google Apps Script
+//  Всі секрети зберігаються ВИКЛЮЧНО у PropertiesService.
+//  Як налаштувати — дивись SETUP-SECRETS.md
+// ════════════════════════════════════════════════════════════
 
-// ── TurboSMS ────────────────────────────────────────────────
-// Вставте сюди ваш API-токен з кабінету turbosms.ua
-const TURBOSMS_TOKEN  = 'ВАШ_ТОКЕН_TURBOSMS';   // ← замінити!
-// Ім'я відправника — підтвердіть в кабінеті TurboSMS (або 'Viber')
-const TURBOSMS_SENDER = 'DimKeratin';             // ← замінити після підтвердження!
-// ────────────────────────────────────────────────────────────
+// ── PropertiesService helpers ────────────────────────────────
+function getProp(key) {
+  return PropertiesService.getScriptProperties().getProperty(key) || '';
+}
 
+// ── Сесії (8 годин, сервер-side CacheService) ────────────────
+function createSession() {
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('sess_' + token, '1', 28800);
+  return token;
+}
 
-// Перетворює будь-яке значення дати → 'yyyy-MM-dd'
+function verifySession(token) {
+  if (!token || typeof token !== 'string' || token.length > 64) return false;
+  return CacheService.getScriptCache().get('sess_' + token) === '1';
+}
+
+function destroySession(token) {
+  if (token) CacheService.getScriptCache().remove('sess_' + token);
+}
+
+// ── Rate limiting: глобально не більше 20 записів/хвилину ────
+function checkRateLimit() {
+  const cache = CacheService.getScriptCache();
+  const key   = 'rl_' + Math.floor(Date.now() / 60000);
+  const count = parseInt(cache.get(key) || '0');
+  if (count >= 20) return false;
+  cache.put(key, String(count + 1), 120);
+  return true;
+}
+
+// ── Валідація телефону (лише UA-формат) ──────────────────────
+function isValidPhone(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  // 380XXXXXXXXX (12 цифр) або 0XXXXXXXXX (10 цифр) або 9 цифр
+  return digits.length >= 9 && digits.length <= 13;
+}
+
+// ── Нормалізація телефону → 380XXXXXXXXX ────────────────────
+function normalizePhone(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.startsWith('380') && digits.length === 12) return digits;
+  if (digits.startsWith('0')   && digits.length === 10) return '38' + digits;
+  if (digits.length === 9) return '380' + digits;
+  return digits;
+}
+
+// ── Форматування дати 'yyyy-MM-dd' → 'ДД.ММ.РРРР' ───────────
+function formatDateUa(iso) {
+  if (!iso || iso.length < 10) return iso || '';
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+// ── Перетворення дати будь-якого типу → 'yyyy-MM-dd' ─────────
 function toDateStr(v) {
   if (!v && v !== 0) return '';
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   const s = String(v).trim();
   if (!s) return '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10); // вже ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
   try {
     const d = new Date(s);
     if (!isNaN(d.getTime())) return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
@@ -22,12 +72,12 @@ function toDateStr(v) {
   return s;
 }
 
-// Перетворює будь-яке значення часу → 'HH:mm'
+// ── Перетворення часу будь-якого типу → 'HH:mm' ─────────────
 function toTimeStr(v) {
   if (!v && v !== 0) return '';
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'HH:mm');
   const s = String(v).trim();
-  if (/^\d{2}:\d{2}/.test(s)) return s.substring(0, 5); // вже HH:mm
+  if (/^\d{2}:\d{2}/.test(s)) return s.substring(0, 5);
   try {
     const d = new Date(s);
     if (!isNaN(d.getTime())) return Utilities.formatDate(d, Session.getScriptTimeZone(), 'HH:mm');
@@ -35,60 +85,124 @@ function toTimeStr(v) {
   return s;
 }
 
-// Форматує дату 'yyyy-MM-dd' → 'ДД.ММ.РРРР' для SMS
-function formatDateUa(iso) {
-  if (!iso || iso.length < 10) return iso || '';
-  const [y, m, d] = iso.split('-');
-  return `${d}.${m}.${y}`;
+// ── Telegram: сповістити персонал (сервер-side) ──────────────
+function notifyStaff(data) {
+  const botToken  = getProp('BOT_TOKEN');
+  if (!botToken) return;
+  const recipients = JSON.parse(getProp('RECIPIENTS') || '[]');
+  if (!recipients.length) return;
+
+  const dateObj = new Date((data.date || '') + 'T12:00:00');
+  const dateStr = isNaN(dateObj) ? (data.date || '') :
+    dateObj.toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const safeName     = escapeHtml(data.name     || '');
+  const safePhone    = escapeHtml(data.phone    || '');
+  const safeTg       = escapeHtml((data.telegram || '').replace('@', ''));
+  const safeService  = escapeHtml(data.service  || '');
+  const safeMessage  = escapeHtml(data.message  || '');
+
+  const text =
+    `🔔 <b>Новий запис!</b>\n\n` +
+    `👤 <b>Ім'я:</b> ${safeName}\n` +
+    `📞 <b>Телефон:</b> ${safePhone}\n` +
+    (data.telegram ? `💬 <b>Telegram:</b> @${safeTg}\n` : '') +
+    `💇 <b>Послуга:</b> ${safeService}\n` +
+    `📅 <b>Дата:</b> ${dateStr}\n` +
+    `🕐 <b>Час:</b> ${escapeHtml(data.time || '')}\n` +
+    (data.message ? `📝 <b>Коментар:</b> ${safeMessage}\n` : '') +
+    `\n——\n📩 Запис з сайту ДІМ КЕРАТИНУ`;
+
+  recipients.forEach(function(recipient) {
+    if (!recipient.chat_id || String(recipient.chat_id).startsWith('CHAT_ID')) return;
+    try {
+      UrlFetchApp.fetch('https://api.telegram.org/bot' + botToken + '/sendMessage', {
+        method:             'post',
+        contentType:        'application/json',
+        payload:            JSON.stringify({ chat_id: recipient.chat_id, text: text, parse_mode: 'HTML' }),
+        muteHttpExceptions: true
+      });
+    } catch(err) {
+      Logger.log('Telegram notifyStaff помилка: ' + err.toString());
+    }
+  });
 }
 
-// Нормалізує номер телефону → '380XXXXXXXXX'
-function normalizePhone(raw) {
-  const digits = String(raw || '').replace(/\D/g, '');
-  if (digits.startsWith('380') && digits.length === 12) return digits;
-  if (digits.startsWith('0')   && digits.length === 10) return '38' + digits;
-  if (digits.length === 9) return '380' + digits;
-  return digits; // повертаємо як є — TurboSMS сам перевірить
+// ── Telegram: підтвердження клієнту (сервер-side) ────────────
+function notifyClient(data) {
+  const botToken    = getProp('BOT_TOKEN');
+  const botUsername = getProp('BOT_USERNAME');
+  if (!botToken || !data.telegram) return;
+
+  const username = String(data.telegram).replace('@', '');
+  if (!username) return;
+
+  const dateObj = new Date((data.date || '') + 'T12:00:00');
+  const dateStr = isNaN(dateObj) ? (data.date || '') :
+    dateObj.toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const text =
+    `✅ <b>Ваш запис прийнято!</b>\n\n` +
+    `💇 <b>Послуга:</b> ${escapeHtml(data.service || '')}\n` +
+    `📅 <b>Дата:</b> ${dateStr}\n` +
+    `🕐 <b>Час:</b> ${escapeHtml(data.time || '')}\n` +
+    `📍 <b>Адреса:</b> вул. Стрийська, 73, Дрогобич\n\n` +
+    `До зустрічі в ДІМ КЕРАТИНУ! ✨\n` +
+    (botUsername ? `Якщо потрібно перенести — напишіть нам: @${escapeHtml(botUsername)}` : '');
+
+  try {
+    const getChat = UrlFetchApp.fetch('https://api.telegram.org/bot' + botToken + '/getChat', {
+      method:             'post',
+      contentType:        'application/json',
+      payload:            JSON.stringify({ chat_id: '@' + username }),
+      muteHttpExceptions: true
+    });
+    const chatData = JSON.parse(getChat.getContentText());
+    if (!chatData.ok) return;
+
+    UrlFetchApp.fetch('https://api.telegram.org/bot' + botToken + '/sendMessage', {
+      method:             'post',
+      contentType:        'application/json',
+      payload:            JSON.stringify({ chat_id: chatData.result.id, text: text, parse_mode: 'HTML' }),
+      muteHttpExceptions: true
+    });
+  } catch(err) {
+    Logger.log('Telegram notifyClient помилка: ' + err.toString());
+  }
 }
 
-// Надсилає SMS через TurboSMS API
-// Повертає true якщо успішно, false якщо помилка (не кидає виняток)
+// ── TurboSMS ─────────────────────────────────────────────────
 function sendSMS(phone, text) {
-  if (!TURBOSMS_TOKEN || TURBOSMS_TOKEN === 'ВАШ_ТОКЕН_TURBOSMS') {
-    Logger.log('TurboSMS: токен не налаштовано, SMS не надіслано');
+  const token  = getProp('TURBOSMS_TOKEN');
+  const sender = getProp('TURBOSMS_SENDER') || 'DimKeratin';
+  if (!token) {
+    Logger.log('TurboSMS: токен не налаштовано в PropertiesService');
     return false;
   }
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone || normalizedPhone.length < 10) {
-    Logger.log('TurboSMS: некоректний номер телефону: ' + phone);
+    Logger.log('TurboSMS: некоректний номер: ' + phone);
     return false;
   }
   try {
-    const payload = {
-      recipients: [normalizedPhone],
-      sms: { sender: TURBOSMS_SENDER, text: text }
-    };
     const options = {
-      method:      'post',
-      contentType: 'application/json',
-      headers:     { 'Authorization': 'Bearer ' + TURBOSMS_TOKEN },
-      payload:     JSON.stringify(payload),
+      method:             'post',
+      contentType:        'application/json',
+      headers:            { 'Authorization': 'Bearer ' + token },
+      payload:            JSON.stringify({ recipients: [normalizedPhone], sms: { sender: sender, text: text } }),
       muteHttpExceptions: true
     };
-    const resp = UrlFetchApp.fetch('https://api.turbosms.ua/message/send.json', options);
+    const resp   = UrlFetchApp.fetch('https://api.turbosms.ua/message/send.json', options);
     const result = JSON.parse(resp.getContentText());
     Logger.log('TurboSMS відповідь: ' + JSON.stringify(result));
-    // Код 0 = успіх у TurboSMS
     return result && result.response_code === 0;
-  } catch (err) {
+  } catch(err) {
     Logger.log('TurboSMS помилка: ' + err.toString());
     return false;
   }
 }
 
-// ── Щоденна розсилка нагадувань ─────────────────────────────
-// Запускається автоматично тригером кожен день о 10:00
-// Щоб встановити тригер — виконайте функцію setupDailyReminder() один раз
+// ── Щоденна розсилка нагадувань ──────────────────────────────
 function sendReminders() {
   const sheet  = getSheet();
   const values = sheet.getDataRange().getValues();
@@ -102,7 +216,6 @@ function sendReminders() {
   const timeIdx  = headers.indexOf('time');
   const statIdx  = headers.indexOf('status');
 
-  // Дата завтра у форматі 'yyyy-MM-dd'
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = Utilities.formatDate(tomorrow, Session.getScriptTimeZone(), 'yyyy-MM-dd');
@@ -118,20 +231,18 @@ function sendReminders() {
       const name    = String(row[nameIdx] || '').trim();
       const service = String(row[svcIdx]  || '').trim();
       const time    = toTimeStr(row[timeIdx]);
-      const text    = `Нагадування: ${name}, завтра о ${time} — ${service}. Дім Кератину. Щоб скасувати — напишіть нам: @dim_keratin_bot`;
+      const botUsername = getProp('BOT_USERNAME') || 'dim_keratin_bot';
+      const text    = `Нагадування: ${name}, завтра о ${time} — ${service}. Дім Кератину. Щоб скасувати — напишіть нам: @${botUsername}`;
       const ok = sendSMS(phone, text);
       if (ok) sent++;
-      Utilities.sleep(300); // пауза між SMS щоб не перевищити ліміт
+      Utilities.sleep(300);
     }
   }
-  Logger.log(`Нагадування надіслано: ${sent}`);
+  Logger.log('Нагадування надіслано: ' + sent);
 }
 
-// Встановлює щоденний тригер на sendReminders о 10:00
-// Виконайте цю функцію ОДИН РАЗ вручну після деплою скрипту
 function setupDailyReminder() {
-  // Видаляємо старі тригери sendReminders щоб не дублювати
-  ScriptApp.getProjectTriggers().forEach(t => {
+  ScriptApp.getProjectTriggers().forEach(function(t) {
     if (t.getHandlerFunction() === 'sendReminders') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('sendReminders')
@@ -145,36 +256,82 @@ function setupDailyReminder() {
 // ── doPost ────────────────────────────────────────────────────
 function doPost(e) {
   try {
-    const data  = JSON.parse(e.postData.contents);
-    const sheet = getSheet();
+    const data = JSON.parse(e.postData.contents);
 
+    // ── Логін адміна ──
+    if (data.action === 'login') {
+      const storedPassword = getProp('ADMIN_PASSWORD');
+      if (!storedPassword) return jsonError('Сервер не налаштовано (ADMIN_PASSWORD)');
+      if (!data.password || data.password !== storedPassword) {
+        Utilities.sleep(500); // захист від brute-force
+        return jsonError('Unauthorized');
+      }
+      return jsonOk({ token: createSession() });
+    }
+
+    // ── Logout ──
+    if (data.action === 'logout') {
+      destroySession(data.token);
+      return jsonOk({ done: true });
+    }
+
+    // ── Публічний запис клієнта ──
     if (data.action === 'add') {
+      // Honeypot: якщо заповнено — бот
+      if (data._hp) return jsonOk({ saved: true }); // мовчки ігнорувати
+
+      // Rate limiting
+      if (!checkRateLimit()) return jsonError('Забагато запитів. Спробуйте пізніше.');
+
+      // Валідація телефону
+      if (!isValidPhone(data.phone)) return jsonError('Некоректний номер телефону');
+
+      // Валідація обов'язкових полів
+      const name    = String(data.name    || '').trim().substring(0, 100);
+      const phone   = String(data.phone   || '').trim().substring(0, 20);
+      const service = String(data.service || '').trim().substring(0, 200);
+      const date    = String(data.date    || '').trim().substring(0, 10);
+      const time    = String(data.time    || '').trim().substring(0, 5);
+      const message = String(data.message || '').trim().substring(0, 500);
+      const telegram = String(data.telegram || '').trim().substring(0, 50);
+
+      if (!name || !phone || !service || !date || !time) {
+        return jsonError('Заповніть всі обов\'язкові поля');
+      }
+
+      const sheet = getSheet();
       sheet.appendRow([
-        data.created_at || new Date().toISOString(),
-        data.name||'', data.phone||'', data.telegram||'',
-        data.service||'', data.date||'', data.time||'',
-        data.message||'', 'очікує', ''
+        new Date().toISOString(),
+        name, phone, telegram,
+        service, date, time,
+        message, 'очікує', ''
       ]);
 
-      // SMS-підтвердження клієнту
-      if (data.phone) {
-        const dateFormatted = formatDateUa(data.date);
-        const smsText = `Дякуємо, ${data.name || 'клієнте'}! Ваш запис прийнято: ${data.service || 'послуга'} ${dateFormatted} о ${data.time}. Очікуйте підтвердження. Дім Кератину`;
-        sendSMS(data.phone, smsText);
+      // Сервер-side Telegram + SMS
+      notifyStaff({ name, phone, telegram, service, date, time, message });
+      notifyClient({ name, phone, telegram, service, date, time });
+
+      if (phone) {
+        const dateFormatted = formatDateUa(date);
+        const smsText = `Дякуємо, ${name}! Ваш запис прийнято: ${service} ${dateFormatted} о ${time}. Очікуйте підтвердження. Дім Кератину`;
+        sendSMS(phone, smsText);
       }
 
       return jsonOk({ saved: true });
     }
 
+    // ── Всі наступні дії потребують сесійного токена ──
+    if (!verifySession(data.key)) return jsonError('Unauthorized');
+
     if (data.action === 'update') {
-      if (data.key !== SECRET_KEY) return jsonError('Unauthorized');
-      const values = sheet.getDataRange().getValues();
+      const values = getSheet().getDataRange().getValues();
       for (let i = 1; i < values.length; i++) {
         if (String(values[i][0]) === String(data.id)) {
+          const sheet      = getSheet();
           const prevStatus = String(values[i][8] || '').trim();
 
-          if (data.status !== undefined) sheet.getRange(i+1,9).setValue(data.status);
-          if (data.note   !== undefined) sheet.getRange(i+1,10).setValue(data.note);
+          if (data.status !== undefined) sheet.getRange(i+1,9).setValue(String(data.status).substring(0,50));
+          if (data.note   !== undefined) sheet.getRange(i+1,10).setValue(String(data.note).substring(0,500));
           if (data.date   !== undefined) {
             const iso = toDateStr(data.date);
             sheet.getRange(i+1,6).setValue(iso || data.date);
@@ -184,10 +341,9 @@ function doPost(e) {
             sheet.getRange(i+1,7).setValue(hhmm || data.time);
           }
 
-          // SMS при зміні статусу (тільки якщо статус дійсно змінився)
+          // SMS при зміні статусу
           const newStatus = data.status;
           if (newStatus && newStatus !== prevStatus) {
-            // Перечитуємо рядок після збереження
             const updRow   = sheet.getRange(i+1, 1, 1, 10).getValues()[0];
             const phone    = String(updRow[2] || '').trim();
             const name     = String(updRow[1] || '').trim();
@@ -197,10 +353,11 @@ function doPost(e) {
             const dateFmt  = formatDateUa(dateIso);
 
             let smsText = null;
+            const botUsername = getProp('BOT_USERNAME') || 'dim_keratin_bot';
             if (newStatus === 'підтверджено') {
               smsText = `${name}, ваш запис підтверджено! ${service} ${dateFmt} о ${time}. Чекаємо вас. Дім Кератину`;
             } else if (newStatus === 'скасовано') {
-              smsText = `${name}, ваш запис ${dateFmt} о ${time} скасовано. Щоб записатись знову: dim-keratin.netlify.app`;
+              smsText = `${name}, ваш запис ${dateFmt} о ${time} скасовано. Щоб записатись знову напишіть: @${botUsername}`;
             }
             if (smsText && phone) sendSMS(phone, smsText);
           }
@@ -212,7 +369,6 @@ function doPost(e) {
     }
 
     if (data.action === 'saveSchedule') {
-      if (data.key !== SECRET_KEY) return jsonError('Unauthorized');
       const sSheet = getSettingsSheet();
       sSheet.clearContents();
       sSheet.appendRow(['workDays',    JSON.stringify(data.workDays    || [])]);
@@ -222,8 +378,25 @@ function doPost(e) {
       return jsonOk({ saved: true });
     }
 
+    if (data.action === 'getAll') {
+      const sheet  = getSheet();
+      const values = sheet.getDataRange().getValues();
+      if (values.length <= 1) return jsonOk({ data: [] });
+      const headers = values[0];
+      const rows = values.slice(1).map(function(row) {
+        const obj = {};
+        headers.forEach(function(h, i) {
+          const v = row[i];
+          obj[h] = (v instanceof Date)
+            ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+            : String(v || '');
+        });
+        return obj;
+      });
+      return jsonOk({ data: rows });
+    }
+
     if (data.action === 'saveServices') {
-      if (data.key !== SECRET_KEY) return jsonError('Unauthorized');
       const svSheet = getServicesSheet();
       svSheet.clearContents();
       svSheet.appendRow(['key', 'value']);
@@ -239,65 +412,67 @@ function doPost(e) {
 // ── doGet ─────────────────────────────────────────────────────
 function doGet(e) {
   try {
-    if (e && e.parameter) {
+    if (!e || !e.parameter) return jsonError('Bad request');
 
-      if (e.parameter.action === 'getServices') {
-        const svSheet = getServicesSheet();
-        const vals = svSheet.getDataRange().getValues();
-        for (const row of vals) {
-          if (String(row[0]) === 'services') {
-            return jsonOk({ services: JSON.parse(String(row[1])) });
-          }
+    // ── Публічні ендпоінти ──
+    if (e.parameter.action === 'getServices') {
+      const svSheet = getServicesSheet();
+      const vals = svSheet.getDataRange().getValues();
+      for (const row of vals) {
+        if (String(row[0]) === 'services') {
+          return jsonOk({ services: JSON.parse(String(row[1])) });
         }
-        return jsonOk({ services: null });
       }
-
-      if (e.parameter.action === 'getSchedule') {
-        const sSheet = getSettingsSheet();
-        const vals   = sSheet.getDataRange().getValues();
-        const result = {};
-        vals.forEach(row => { if (row[0]) result[String(row[0])] = String(row[1]); });
-        return jsonOk({ schedule: result });
-      }
-
-      if (e.parameter.action === 'getAvailableSlots') {
-        const date   = e.parameter.date || '';
-        const bSheet = getSheet();
-        const bVals  = bSheet.getDataRange().getValues();
-        const headers = bVals[0];
-        const dIdx   = headers.indexOf('date');
-        const tIdx   = headers.indexOf('time');
-        const sIdx   = headers.indexOf('status');
-        const booked = bVals.slice(1)
-          .filter(r => {
-            const rowDate = toDateStr(r[dIdx]);
-            return rowDate === date && String(r[sIdx]).trim() === 'підтверджено';
-          })
-          .map(r => toTimeStr(r[tIdx]));
-        return jsonOk({ bookedTimes: booked });
-      }
-
+      return jsonOk({ services: null });
     }
 
-    if (!e || !e.parameter || e.parameter.key !== SECRET_KEY)
-      return jsonError('Unauthorized');
+    if (e.parameter.action === 'getSchedule') {
+      const sSheet = getSettingsSheet();
+      const vals   = sSheet.getDataRange().getValues();
+      const result = {};
+      vals.forEach(function(row) { if (row[0]) result[String(row[0])] = String(row[1]); });
+      return jsonOk({ schedule: result });
+    }
 
-    const sheet  = getSheet();
-    const values = sheet.getDataRange().getValues();
-    if (values.length <= 1) return jsonOk({ data: [] });
-    const headers = values[0];
-    const rows = values.slice(1).map(row => {
-      const obj = {};
-      headers.forEach((h, i) => {
-        const v = row[i];
-        obj[h] = (v instanceof Date)
-          ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd')
-          : String(v || '');
+    if (e.parameter.action === 'getAvailableSlots') {
+      const date   = String(e.parameter.date || '').substring(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return jsonError('Invalid date');
+      const bSheet = getSheet();
+      const bVals  = bSheet.getDataRange().getValues();
+      const headers = bVals[0];
+      const dIdx   = headers.indexOf('date');
+      const tIdx   = headers.indexOf('time');
+      const sIdx   = headers.indexOf('status');
+      const booked = bVals.slice(1)
+        .filter(function(r) {
+          const rowDate = toDateStr(r[dIdx]);
+          return rowDate === date && String(r[sIdx]).trim() === 'підтверджено';
+        })
+        .map(function(r) { return toTimeStr(r[tIdx]); });
+      return jsonOk({ bookedTimes: booked });
+    }
+
+    // ── Адмін-ендпоінт: потребує сесійного токена ──
+    if (e.parameter.action === 'getAll') {
+      if (!verifySession(e.parameter.key)) return jsonError('Unauthorized');
+      const sheet  = getSheet();
+      const values = sheet.getDataRange().getValues();
+      if (values.length <= 1) return jsonOk({ data: [] });
+      const headers = values[0];
+      const rows = values.slice(1).map(function(row) {
+        const obj = {};
+        headers.forEach(function(h, i) {
+          const v = row[i];
+          obj[h] = (v instanceof Date)
+            ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+            : String(v || '');
+        });
+        return obj;
       });
-      return obj;
-    });
-    return jsonOk({ data: rows });
+      return jsonOk({ data: rows });
+    }
 
+    return jsonError('Unauthorized');
   } catch(err) { return jsonError(err.toString()); }
 }
 
@@ -336,5 +511,12 @@ function getServicesSheet() {
   return sheet;
 }
 
-function jsonOk(x)    { return ContentService.createTextOutput(JSON.stringify({ok:true,...x})).setMimeType(ContentService.MimeType.JSON); }
+// ── HTML-екранування (захист від XSS у Telegram/SMS) ─────────
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function jsonOk(x)    { return ContentService.createTextOutput(JSON.stringify(Object.assign({ok:true},x))).setMimeType(ContentService.MimeType.JSON); }
 function jsonError(m) { return ContentService.createTextOutput(JSON.stringify({ok:false,error:m})).setMimeType(ContentService.MimeType.JSON); }

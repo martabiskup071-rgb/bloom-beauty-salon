@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com; frame-src https://www.google.com; connect-src https://script.google.com https://script.googleusercontent.com; frame-ancestors 'none';" />
   <meta name="description" content="ДІМ КЕРАТИНУ — спеціалізований салон з відновлення волосся у Дрогобичі. Кератин, ботокс, нанопластика, холодне відновлення. Трітментолог Ангеліна Юркевич." />
   <title>ДІМ КЕРАТИНУ — Angelina Yurkevich hair studio</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -373,6 +375,10 @@
           <label for="b-message">Коментар <span class="label-optional">(необов'язково)</span></label>
           <textarea id="b-message" name="message" placeholder="Стан волосся, побажання..."></textarea>
         </div>
+
+        <!-- Honeypot: приховано від людей, боти заповнюють -->
+        <input type="text" id="b-hp" name="b-hp" tabindex="-1" autocomplete="off"
+          style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true" />
 
         <button type="submit" class="form-submit" id="booking-btn">Записатись →</button>
       </form>

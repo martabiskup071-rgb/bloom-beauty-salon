@@ -3,35 +3,21 @@
 //  Цей файл редагує Ангеліна — без технічних знань
 //
 //  Що можна змінювати:
-//  → Послуги і ціни         (розділ 3)
-//  → Розклад роботи         (розділ 2)
-//  → Telegram-налаштування  (розділ 1)
+//  → Послуги і ціни         (розділ 2)
+//  → Розклад роботи         (розділ 1)
+//
+//  ❗ СЕКРЕТИ (пароль, Telegram-токен, TurboSMS) —
+//     зберігаються у Google Apps Script PropertiesService.
+//     Дивись SETUP-SECRETS.md
 // ═══════════════════════════════════════════════════════════
 
 
-// ── 1. TELEGRAM ─────────────────────────────────────────────
-// Токен бота (отримати у @BotFather — дивись TELEGRAM-SETUP.md)
-const BOT_TOKEN = '8758803173:AAHrUwxYc4w1z0U32QAVJ22ZrKGcCmIAJV0';
-
-// Хто отримує сповіщення про нові записи
-const RECIPIENTS = [
-  { name: 'Ангеліна', chat_id: '914794563' },
-  // { name: 'Софія', chat_id: 'CHAT_ID_SOFIA' }  // додати chat_id Софії
-];
-
-// Username бота (без @), наприклад: 'dim_keratin_bot'
-const BOT_USERNAME = 'dim_keratin_bot';
-
-// ── АДМІН-ПАНЕЛЬ ────────────────────────────────────────────
-// Пароль для входу в адмін-панель (/admin.html)
-// Змінити на свій пароль!
-const ADMIN_PASSWORD = 'keratin2026';
-
 // ── GOOGLE SHEETS (зберігання записів клієнтів) ─────────────
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxccK5BGRE5BfUc0_y_GUlxrVnhd1tG0Y4qSsDnwDbAGRL2MH0JUgbbVuGEBazdcIh9/exec';
+// Замінити на свій URL після деплою Apps Script
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt_EKoSpLEysvaLIk1Q2nQN1H4lWKgouyeL7f8qwh3YThRbTPOo1u9el2b0f_Jdtda/exec';
 
 
-// ── 2. РОЗКЛАД РОБОТИ ───────────────────────────────────────
+// ── 1. РОЗКЛАД РОБОТИ ───────────────────────────────────────
 const SCHEDULE = {
 
   // Робочі дні тижня
@@ -61,7 +47,7 @@ const SCHEDULE = {
 };
 
 
-// ── 3. ПОСЛУГИ І ЦІНИ ───────────────────────────────────────
+// ── 2. ПОСЛУГИ І ЦІНИ ───────────────────────────────────────
 //
 //  Кожна послуга має:
 //    icon    — емодзі іконка
